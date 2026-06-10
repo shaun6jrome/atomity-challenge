@@ -97,7 +97,8 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). If that port is already in
+use, Next.js automatically selects the next available port.
 
 Validation commands:
 
@@ -110,6 +111,12 @@ npm run build
 
 The project is ready for Vercel deployment with the default Next.js settings.
 Connect this repository in Vercel and deploy the `main` branch.
+
+## Submission Checklist
+
+- GitHub repository: available
+- Live demo URL: still needs to be created in Vercel, Netlify, or Cloudflare Pages
+- README coverage: complete
 
 ## Tradeoffs
 
