@@ -1,285 +1,199 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useMemo, useRef, useState } from "react";
+import { useInView } from "framer-motion";
+import { useCloudResources } from "../hooks/useCloudResources";
+import type { ResourceNode } from "../libs/api";
 import CostTable from "./CostTable";
+import ResourceChart from "./ResourceChart";
 
-type Node = {
-  name: string;
-  cost: number;
+type Selection = {
+  cluster?: ResourceNode;
+  namespace?: ResourceNode;
 };
 
-const DATA = {
-  cluster: [
-    {
-      name: "Production",
-      cost: 12400,
-    },
-    {
-      name: "AI Training",
-      cost: 9800,
-    },
-    {
-      name: "Analytics",
-      cost: 7600,
-    },
-    {
-      name: "Monitoring",
-      cost: 4100,
-    },
-  ],
+const resourceTypes = ["CPU", "GPU", "RAM", "Storage", "Network"];
 
-  namespaces: {
-    Production: [
-      {
-        name: "api-services",
-        cost: 6200,
-      },
-      {
-        name: "customer-data",
-        cost: 3800,
-      },
-      {
-        name: "payments",
-        cost: 2400,
-      },
-    ],
-
-    "AI Training": [
-      {
-        name: "gpu-workers",
-        cost: 5100,
-      },
-      {
-        name: "training-jobs",
-        cost: 2800,
-      },
-      {
-        name: "inference",
-        cost: 1900,
-      },
-    ],
-
-    Analytics: [
-      {
-        name: "warehouse",
-        cost: 3200,
-      },
-      {
-        name: "etl-pipelines",
-        cost: 2400,
-      },
-      {
-        name: "reporting",
-        cost: 2000,
-      },
-    ],
-
-    Monitoring: [
-      {
-        name: "logs",
-        cost: 1700,
-      },
-      {
-        name: "metrics",
-        cost: 1300,
-      },
-      {
-        name: "alerts",
-        cost: 1100,
-      },
-    ],
-  },
-
-  pods: {
-    "gpu-workers": [
-      {
-        name: "trainer-01",
-        cost: 2200,
-      },
-      {
-        name: "trainer-02",
-        cost: 1700,
-      },
-      {
-        name: "trainer-03",
-        cost: 800,
-      },
-      {
-        name: "trainer-04",
-        cost: 400,
-      },
-    ],
-  },
-};
+function LoadingState() {
+  return (
+    <div className="grid min-h-[34rem] place-items-center px-6 text-center">
+      <div>
+        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-accent)]" />
+        <p className="mt-5 text-sm text-[var(--color-text-secondary)]">
+          Mapping live cloud costs…
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function ResourceDiscovery() {
-  const [level, setLevel] = useState<
-    "cluster" | "namespace" | "pod"
-  >("cluster");
+  const { data, isLoading, isError, refetch } = useCloudResources();
+  const [selection, setSelection] = useState<Selection>({});
+  const sectionRef = useRef<HTMLElement>(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.18 });
+  const reduceMotion = useReducedMotion();
 
-  const [cluster, setCluster] = useState("");
-  const [namespace, setNamespace] = useState("");
+  const level = selection.namespace
+    ? "Pod"
+    : selection.cluster
+      ? "Namespace"
+      : "Cluster";
 
-  let currentData: Node[] = [];
-  let breadcrumb = "Cluster";
+  const nodes = useMemo(() => {
+    if (selection.namespace) {
+      return selection.namespace.children ?? [];
+    }
 
-  if (level === "cluster") {
-    currentData = DATA.cluster;
-  }
+    if (selection.cluster) {
+      return selection.cluster.children ?? [];
+    }
 
-  if (level === "namespace") {
-    currentData =
-      DATA.namespaces[
-        cluster as keyof typeof DATA.namespaces
-      ] || [];
+    return data ?? [];
+  }, [data, selection]);
 
-    breadcrumb = `${cluster} / Namespace`;
-  }
+  const path = [
+    selection.cluster?.name,
+    selection.namespace?.name,
+  ].filter(Boolean);
 
-  if (level === "pod") {
-    currentData =
-      DATA.pods[
-        namespace as keyof typeof DATA.pods
-      ] || [];
-
-    breadcrumb = `${cluster} / ${namespace} / Pods`;
-  }
-
-  const maxCost = Math.max(
-    ...currentData.map((item) => item.cost),
-    1
-  );
-
-  function handleClick(item: Node) {
-    if (level === "cluster") {
-      setCluster(item.name);
-      setLevel("namespace");
+  function selectNode(node: ResourceNode) {
+    if (!selection.cluster) {
+      setSelection({ cluster: node });
       return;
     }
 
-    if (
-      level === "namespace" &&
-      item.name === "gpu-workers"
-    ) {
-      setNamespace(item.name);
-      setLevel("pod");
+    if (!selection.namespace) {
+      setSelection((current) => ({ ...current, namespace: node }));
     }
   }
 
-  function handleBack() {
-    if (level === "pod") {
-      setLevel("namespace");
+  function goBack() {
+    if (selection.namespace) {
+      setSelection({ cluster: selection.cluster });
       return;
     }
 
-    if (level === "namespace") {
-      setLevel("cluster");
-    }
+    setSelection({});
   }
 
   return (
-    <section className="relative py-32">
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="mb-12 flex items-start justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-green-400">
-              Aggregated By
-            </p>
+    <section
+      id="cost-explorer"
+      ref={sectionRef}
+      aria-labelledby="cost-explorer-title"
+      className="cost-section relative overflow-hidden"
+    >
+      <motion.div
+        initial={reduceMotion ? false : { opacity: 0, y: 48 }}
+        animate={isInView ? { opacity: 1, y: 0 } : undefined}
+        transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6"
+      >
+        <div className="mb-10 max-w-3xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[var(--color-accent)]">
+            Live cost topology
+          </p>
+          <h2
+            id="cost-explorer-title"
+            className="mt-4 text-[clamp(2.5rem,7vw,5.5rem)] font-bold leading-[0.95] tracking-[-0.055em]"
+          >
+            Zoom into the spend.
+          </h2>
+          <p className="mt-6 max-w-2xl text-base leading-7 text-[var(--color-text-secondary)] sm:text-lg">
+            Every bar is a doorway. Follow cost from a cluster into its
+            namespaces and all the way down to individual pods.
+          </p>
+        </div>
 
-            <h2 className="mt-3 text-4xl font-bold text-white">
-              {breadcrumb}
-            </h2>
+        <div className="cost-panel">
+          <div className="cost-panel-header flex items-center justify-between gap-5 border-b border-[var(--color-border)] px-5 py-5 sm:px-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="rounded-full border border-[var(--color-border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em]">
+                Last 30 days
+              </span>
+              <span className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--color-background)]">
+                {path.length ? path.join(" / ") : "All infrastructure"}
+              </span>
+            </div>
 
-            <p className="mt-4 max-w-2xl text-slate-400">
-              Drill into infrastructure costs from
-              clusters down to workload level.
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-xs text-[var(--color-text-secondary)]">Aggregated by</p>
+                <p className="font-semibold">{level}</p>
+              </div>
+              {selection.cluster && (
+                <button
+                  type="button"
+                  onClick={goBack}
+                  className="rounded-full border border-[var(--color-border)] px-4 py-2 text-sm font-semibold transition hover:border-[var(--color-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)]"
+                >
+                  Back
+                </button>
+              )}
+            </div>
           </div>
 
-          {level !== "cluster" && (
-            <button
-              onClick={handleBack}
-              className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 transition hover:border-green-400 hover:text-white"
-            >
-              Back
-            </button>
+          {isLoading && <LoadingState />}
+
+          {isError && (
+            <div className="grid min-h-[34rem] place-items-center px-6 text-center">
+              <div>
+                <p className="font-semibold">The live cost feed is unavailable.</p>
+                <button
+                  type="button"
+                  onClick={() => refetch()}
+                  className="mt-5 rounded-full bg-[var(--color-accent)] px-5 py-2 text-sm font-bold text-[var(--color-background)]"
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && !isError && nodes.length > 0 && (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${level}-${path.join("-")}`}
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.985 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={reduceMotion ? undefined : { opacity: 0, scale: 1.01 }}
+                transition={{ duration: 0.28 }}
+              >
+                <ResourceChart
+                  nodes={nodes}
+                  canDrillDown={level !== "Pod"}
+                  onSelect={selectNode}
+                />
+                <CostTable data={nodes} />
+              </motion.div>
+            </AnimatePresence>
           )}
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={breadcrumb}
-            initial={{
-              opacity: 0,
-              y: 20,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            exit={{
-              opacity: 0,
-              y: -20,
-            }}
-            transition={{
-              duration: 0.3,
-            }}
-            className="space-y-6"
-          >
-            {currentData.map((item, index) => (
-              <motion.button
-                key={item.name}
-                onClick={() =>
-                  handleClick(item)
-                }
-                initial={{
-                  opacity: 0,
-                  x: -30,
-                }}
-                animate={{
-                  opacity: 1,
-                  x: 0,
-                }}
-                transition={{
-                  delay: index * 0.08,
-                }}
-                className="w-full text-left"
-              >
-                <div className="mb-2 flex justify-between">
-                  <span className="font-medium text-white">
-                    {item.name}
-                  </span>
-
-                  <span className="text-green-400">
-                    $
-                    {item.cost.toLocaleString()}
-                  </span>
-                </div>
-
-                <div className="h-4 rounded-full bg-slate-800">
-                  <motion.div
-                    initial={{
-                      width: 0,
-                    }}
-                    animate={{
-                      width: `${
-                        (item.cost / maxCost) * 100
-                      }%`,
-                    }}
-                    transition={{
-                      duration: 0.8,
-                    }}
-                    className="h-4 rounded-full bg-green-400"
-                  />
-                </div>
-              </motion.button>
-            ))}
-          </motion.div>
-        </AnimatePresence>
-
-        <CostTable data={currentData} />
-      </div>
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : undefined}
+          transition={{ delay: 0.45, duration: 0.55 }}
+          className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-5"
+          aria-label="Cost dimensions"
+        >
+          {resourceTypes.map((type, index) => (
+            <motion.div
+              key={type}
+              whileHover={reduceMotion ? undefined : { y: -5 }}
+              transition={{ delay: index * 0.04 }}
+              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-accent-soft)] px-4 py-5 text-center"
+            >
+              <span className="mx-auto mb-3 grid h-9 w-9 place-items-center rounded-xl bg-[var(--color-accent)] text-xs font-black text-[var(--color-background)]">
+                {type.slice(0, 2)}
+              </span>
+              <span className="text-sm font-semibold">{type}</span>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.div>
     </section>
   );
 }

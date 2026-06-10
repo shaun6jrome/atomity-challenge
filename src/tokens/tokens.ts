@@ -8,8 +8,12 @@ export const tokens = {
     textSecondary: "var(--color-text-secondary)",
 
     accent: "var(--color-accent)",
+    accentStrong: "var(--color-accent-strong)",
+    accentSoft: "var(--color-accent-soft)",
     success: "var(--color-success)",
     warning: "var(--color-warning)",
+    border: "var(--color-border)",
+    muted: "var(--color-muted)",
   },
 
   radius: {

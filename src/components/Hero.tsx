@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 export default function Hero() {
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#0f3d2e_0%,#080b12_50%)]" />
+      <div className="hero-glow absolute inset-0" />
 
       <motion.div
         initial={{ opacity: 0, y: 40 }}
@@ -13,19 +13,27 @@ export default function Hero() {
         transition={{ duration: 0.8 }}
         className="relative z-10 mx-auto max-w-4xl px-6 text-center"
       >
-        <div className="mb-6 inline-flex rounded-full border border-green-500/20 bg-green-500/10 px-4 py-2 text-sm text-green-400">
-          Atomity Cloud Intelligence
+        <div className="mb-6 inline-flex rounded-full border border-[var(--color-border)] bg-[var(--color-accent-soft)] px-4 py-2 text-sm text-[var(--color-accent)]">
+          Option A · Cost Explorer
         </div>
 
-        <h1 className="text-5xl font-bold md:text-7xl">
-          Understand where your cloud spend lives.
+        <h1 className="text-5xl font-bold tracking-[-0.05em] md:text-7xl">
+          Follow every dollar to its source.
         </h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
-          Discover hidden infrastructure costs, drill into workloads,
-          and uncover optimization opportunities through a
-          progressively revealed cost intelligence experience.
+        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[var(--color-text-secondary)]">
+          Move from cluster to namespace to pod in one continuous cost
+          investigation. Scroll to open the live explorer.
         </p>
+
+        <motion.a
+          href="#cost-explorer"
+          whileHover={{ y: 3 }}
+          className="mt-12 inline-flex flex-col items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-text-secondary)]"
+        >
+          Explore costs
+          <span aria-hidden="true" className="h-10 w-px bg-[var(--color-accent)]" />
+        </motion.a>
       </motion.div>
     </section>
   );
