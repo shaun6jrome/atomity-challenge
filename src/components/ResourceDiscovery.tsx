@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import CostTable from "./CostTable";
 
 type Node = {
   name: string;
@@ -10,44 +11,104 @@ type Node = {
 
 const DATA = {
   cluster: [
-    { name: "Production", cost: 12400 },
-    { name: "AI Training", cost: 9800 },
-    { name: "Analytics", cost: 7600 },
-    { name: "Monitoring", cost: 4100 },
+    {
+      name: "Production",
+      cost: 12400,
+    },
+    {
+      name: "AI Training",
+      cost: 9800,
+    },
+    {
+      name: "Analytics",
+      cost: 7600,
+    },
+    {
+      name: "Monitoring",
+      cost: 4100,
+    },
   ],
 
   namespaces: {
     Production: [
-      { name: "api-services", cost: 6200 },
-      { name: "customer-data", cost: 3800 },
-      { name: "payments", cost: 2400 },
+      {
+        name: "api-services",
+        cost: 6200,
+      },
+      {
+        name: "customer-data",
+        cost: 3800,
+      },
+      {
+        name: "payments",
+        cost: 2400,
+      },
     ],
 
     "AI Training": [
-      { name: "gpu-workers", cost: 5100 },
-      { name: "training-jobs", cost: 2800 },
-      { name: "inference", cost: 1900 },
+      {
+        name: "gpu-workers",
+        cost: 5100,
+      },
+      {
+        name: "training-jobs",
+        cost: 2800,
+      },
+      {
+        name: "inference",
+        cost: 1900,
+      },
     ],
 
     Analytics: [
-      { name: "warehouse", cost: 3200 },
-      { name: "etl-pipelines", cost: 2400 },
-      { name: "reporting", cost: 2000 },
+      {
+        name: "warehouse",
+        cost: 3200,
+      },
+      {
+        name: "etl-pipelines",
+        cost: 2400,
+      },
+      {
+        name: "reporting",
+        cost: 2000,
+      },
     ],
 
     Monitoring: [
-      { name: "logs", cost: 1700 },
-      { name: "metrics", cost: 1300 },
-      { name: "alerts", cost: 1100 },
+      {
+        name: "logs",
+        cost: 1700,
+      },
+      {
+        name: "metrics",
+        cost: 1300,
+      },
+      {
+        name: "alerts",
+        cost: 1100,
+      },
     ],
   },
 
   pods: {
     "gpu-workers": [
-      { name: "trainer-01", cost: 2200 },
-      { name: "trainer-02", cost: 1700 },
-      { name: "trainer-03", cost: 800 },
-      { name: "trainer-04", cost: 400 },
+      {
+        name: "trainer-01",
+        cost: 2200,
+      },
+      {
+        name: "trainer-02",
+        cost: 1700,
+      },
+      {
+        name: "trainer-03",
+        cost: 800,
+      },
+      {
+        name: "trainer-04",
+        cost: 400,
+      },
     ],
   },
 };
@@ -86,7 +147,7 @@ export default function ResourceDiscovery() {
   }
 
   const maxCost = Math.max(
-    ...currentData.map((d) => d.cost),
+    ...currentData.map((item) => item.cost),
     1
   );
 
@@ -94,9 +155,10 @@ export default function ResourceDiscovery() {
     if (level === "cluster") {
       setCluster(item.name);
       setLevel("namespace");
+      return;
     }
 
-    else if (
+    if (
       level === "namespace" &&
       item.name === "gpu-workers"
     ) {
@@ -105,7 +167,7 @@ export default function ResourceDiscovery() {
     }
   }
 
-  function goBack() {
+  function handleBack() {
     if (level === "pod") {
       setLevel("namespace");
       return;
@@ -119,13 +181,13 @@ export default function ResourceDiscovery() {
   return (
     <section className="relative py-32">
       <div className="mx-auto max-w-6xl px-6">
-        <div className="mb-12 flex items-center justify-between">
+        <div className="mb-12 flex items-start justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-green-400">
               Aggregated By
             </p>
 
-            <h2 className="mt-3 text-4xl font-bold">
+            <h2 className="mt-3 text-4xl font-bold text-white">
               {breadcrumb}
             </h2>
 
@@ -137,8 +199,8 @@ export default function ResourceDiscovery() {
 
           {level !== "cluster" && (
             <button
-              onClick={goBack}
-              className="rounded-lg border border-slate-700 px-4 py-2 text-sm hover:border-green-400"
+              onClick={handleBack}
+              className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 transition hover:border-green-400 hover:text-white"
             >
               Back
             </button>
@@ -150,7 +212,7 @@ export default function ResourceDiscovery() {
             key={breadcrumb}
             initial={{
               opacity: 0,
-              y: 30,
+              y: 20,
             }}
             animate={{
               opacity: 1,
@@ -158,10 +220,10 @@ export default function ResourceDiscovery() {
             }}
             exit={{
               opacity: 0,
-              y: -30,
+              y: -20,
             }}
             transition={{
-              duration: 0.35,
+              duration: 0.3,
             }}
             className="space-y-6"
           >
@@ -173,7 +235,7 @@ export default function ResourceDiscovery() {
                 }
                 initial={{
                   opacity: 0,
-                  x: -40,
+                  x: -30,
                 }}
                 animate={{
                   opacity: 1,
@@ -185,7 +247,7 @@ export default function ResourceDiscovery() {
                 className="w-full text-left"
               >
                 <div className="mb-2 flex justify-between">
-                  <span className="font-medium">
+                  <span className="font-medium text-white">
                     {item.name}
                   </span>
 
@@ -215,6 +277,8 @@ export default function ResourceDiscovery() {
             ))}
           </motion.div>
         </AnimatePresence>
+
+        <CostTable data={currentData} />
       </div>
     </section>
   );
