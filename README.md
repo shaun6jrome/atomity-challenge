@@ -10,7 +10,8 @@ pod while the chart and cost table remain synchronized.
 The cluster chart offered the strongest opportunity to combine product
 thinking with interaction design. Instead of treating the bars as a static
 visualization, this version makes every bar a doorway into the next level of
-infrastructure detail.
+infrastructure detail. Users can progressively navigate from cluster-level costs to namespaces and finally 
+individual pods while maintaining context through synchronized charts and metrics.
 
 ## Experience
 
@@ -94,8 +95,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). If that port is already in
-use, Next.js automatically selects the next available port.
+Open http://localhost:3000. If that port is already in use, Next.js automatically selects the next available port.
 
 Validation commands:
 
@@ -106,14 +106,18 @@ npm run build
 
 ## Deployment
 
-The project is ready for Vercel deployment with the default Next.js settings.
-Connect this repository in Vercel and deploy the `main` branch.
+Production deployment:
+
+https://atomity-challenge-seven.vercel.app/
+
+The application is deployed on Vercel using the default Next.js configuration.
+Every push to the `main` branch automatically triggers a new production deployment.
 
 ## Submission Checklist
 
-GitHub repository: https://github.com/shaun6jrome/atomity-challenge
-Live demo URL: https://atomity-challenge-seven.vercel.app/
-README coverage: complete
+- GitHub repository: https://github.com/shaun6jrome/atomity-challenge
+- Live demo URL: https://atomity-challenge-seven.vercel.app/
+- README coverage: complete
 
 ## Tradeoffs
 
