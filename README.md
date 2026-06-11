@@ -47,8 +47,7 @@ by the operating system.
 ## Tokens And Styling
 
 Color, surface, border, glow, shadow, and typography values live in CSS custom
-properties in `src/app/globals.css`. The TypeScript token map in
-`src/tokens/tokens.ts` exposes the same semantic values to components.
+properties in `src/app/globals.css`. Design tokens are defined through CSS custom properties in src/app/globals.css and referenced throughout the application via semantic CSS variables.
 
 Tailwind CSS is used for composition, while modern CSS provides:
 
