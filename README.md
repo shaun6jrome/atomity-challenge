@@ -111,9 +111,9 @@ Connect this repository in Vercel and deploy the `main` branch.
 
 ## Submission Checklist
 
-- GitHub repository: available
-- Live demo URL: still needs to be created in Vercel, Netlify, or Cloudflare Pages
-- README coverage: complete
+GitHub repository: https://github.com/shaun6jrome/atomity-challenge
+Live demo URL: https://atomity-challenge-seven.vercel.app/
+README coverage: complete
 
 ## Tradeoffs
 
