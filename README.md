@@ -60,8 +60,9 @@ Tailwind CSS is used for composition, while modern CSS provides:
 
 No prebuilt UI component library or template is used.
 
-Structure
+## Structure
 
+```text
 src/
   app/
     globals.css
@@ -77,6 +78,7 @@ src/
     useCloudResources.ts
   libs/
     api.ts
+```
 
 ## Libraries
 
